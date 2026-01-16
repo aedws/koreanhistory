@@ -467,8 +467,8 @@
                 });
 
                 const isDataTab = computed(() => {
-                    const currentTabObj = tabs.value.find(t => t.id === currentTab.value);
-                    return currentTabObj && currentTabObj.category;
+                    const allowedTabs = ['korean_history', 'criminal_law_general'];
+                    return allowedTabs.includes(currentTab.value);
                 });
 
                 const displayCount = computed(() => {
