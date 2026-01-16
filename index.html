@@ -3,203 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>한국사 키워드 암기장</title>
-    <script>
-        // 다크모드 설정 초기화
-        if (localStorage.getItem('darkMode') === 'true' || 
-            (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        }
-    </script>
+    <title>Inspector Sigma Core 1.0</title>
     <!-- Tailwind CSS -->
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        dark: {
-                            bg: '#121212',
-                            card: '#1e1e1e',
-                            header: '#1e1e1e',
-                            text: '#e0e0e0',
-                            subtext: '#b0b0b0'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Vue.js 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <!-- PapaParse -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap');
-        body { font-family: 'Pretendard', sans-serif; transition: background-color 0.3s; }
-        .sticky-header { position: sticky; top: 0; z-index: 50; }
-        /* Remove blue highlight on mobile tap */
-        * { -webkit-tap-highlight-color: transparent; }
-
-        /* 다크모드 설정 */
-        @media (prefers-color-scheme: dark) {
-            :root { color-scheme: dark; }
-            body { background-color: #111827 !important; color: #f3f4f6 !important; }
-            #app { background-color: #111827 !important; }
-            .bg-white { background-color: #1f2937 !important; }
-            .bg-gray-50 { background-color: #111827 !important; }
-            .bg-gray-100 { background-color: #374151 !important; }
-            .border-gray-100 { border-color: #374151 !important; }
-            .border-b { border-color: #374151 !important; }
-            .text-gray-900 { color: #f9fafb !important; }
-            .text-gray-600 { color: #d1d5db !important; }
-            .text-gray-400 { color: #9ca3af !important; }
-            input, select { background-color: #374151 !important; border-color: #4b5563 !important; color: #f9fafb !important; }
-            .sticky-header { background-color: rgba(31, 41, 55, 0.8) !important; border-bottom-color: #374151 !important; }
-            .bg-blue-50 { background-color: #1e3a8a !important; color: #bfdbfe !important; }
-            .bg-blue-100 { background-color: #1e3a8a !important; color: #93c5fd !important; }
-            .bg-amber-50 { background-color: #451a03 !important; color: #fcd34d !important; }
-            .text-blue-600 { color: #60a5fa !important; }
-            .text-blue-700 { color: #93c5fd !important; }
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Pretendard:wght@400;600;700&display=swap');
+        
+        :root {
+            color-scheme: dark;
         }
 
-        /* 시대별 색상 정의 (다크모드 대응) */
-        .era-전삼국시대 { background-color: #fef3c7; color: #92400e; }
-        .era-삼국시대 { background-color: #dcfce7; color: #166534; }
-        .era-남북국시대 { background-color: #e0f2fe; color: #075985; }
-        .era-고려 { background-color: #f3e8ff; color: #6b21a8; }
-        .era-조선 { background-color: #fee2e2; color: #991b1b; }
-        .era-근대 { background-color: #ffedd5; color: #9a3412; }
-        .era-일제강점기 { background-color: #f1f5f9; color: #334155; }
-        .era-현대 { background-color: #ecfdf5; color: #065f46; }
-        .era-default { background-color: #f3f4f6; color: #374151; }
-
-        @media (prefers-color-scheme: dark) {
-            .era-전삼국시대 { background-color: #451a03; color: #fdba74; }
-            .era-삼국시대 { background-color: #064e3b; color: #6ee7b7; }
-            .era-남북국시대 { background-color: #0c4a6e; color: #7dd3fc; }
-            .era-고려 { background-color: #4c1d95; color: #ddd6fe; }
-            .era-조선 { background-color: #7f1d1d; color: #fca5a5; }
-            .era-근대 { background-color: #7c2d12; color: #fdba74; }
-            .era-일제강점기 { background-color: #334155; color: #cbd5e1; }
-            .era-현대 { background-color: #064e3b; color: #6ee7b7; }
+        body { 
+            font-family: 'Pretendard', sans-serif; 
+            background-color: #000000;
+            color: #ffffff;
+            -webkit-tap-highlight-color: transparent;
         }
-        .dark .era-삼국시대 { background-color: #052e16; color: #86efac; }
-        .dark .era-남북국시대 { background-color: #082f49; color: #7dd3fc; }
-        .dark .era-고려 { background-color: #2e1065; color: #d8b4fe; }
-        .dark .era-조선 { background-color: #450a0a; color: #fca5a5; }
-        .dark .era-근대 { background-color: #431407; color: #fdba74; }
-        .dark .era-일제강점기 { background-color: #1e293b; color: #cbd5e1; }
-        .dark .era-현대 { background-color: #064e3b; color: #6ee7b7; }
 
-        /* 분류별 색상 정의 */
-        .cat-정치 { border-left: 4px solid #3b82f6; }
-        .cat-경제 { border-left: 4px solid #10b981; }
-        .cat-사회 { border-left: 4px solid #f59e0b; }
-        .cat-문화 { border-left: 4px solid #8b5cf6; }
-        .cat-인물 { border-left: 4px solid #ef4444; }
-        .cat-default { border-left: 4px solid #d1d5db; }
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        
+        .glass-panel {
+            background: rgba(15, 15, 15, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .cyber-card {
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cyber-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 2px;
+            height: 100%;
+            background: #3b82f6;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .cyber-card:hover::before {
+            opacity: 1;
+        }
+
+        .status-box {
+            background: rgba(20, 20, 20, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+
+        .scanline {
+            width: 100%;
+            height: 2px;
+            background: rgba(59, 130, 246, 0.1);
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            pointer-events: none;
+            animation: scanline 6s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+
+        .tab-active {
+            color: #3b82f6;
+            border-bottom: 2px solid #3b82f6;
+        }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-900">
-    <div id="app" class="max-w-md mx-auto min-h-screen bg-white shadow-lg">
-        
-        <!-- 상단 고정 헤더 -->
-        <header class="sticky-header bg-white/80 backdrop-blur-md border-b px-4 pt-6 pb-4">
-            <h1 class="text-xl font-bold text-gray-900 mb-4 flex items-center justify-between">
-                <span>🇰🇷 한능검 키워드</span>
-                <span class="text-xs font-normal text-gray-400">데이터: {{ items.length }}개</span>
-            </h1>
-            
-            <!-- 검색창 -->
-            <div class="relative mb-3">
-                <input type="text" v-model="searchQuery" 
-                    placeholder="검색어를 입력하세요 (제목, 내용)" 
-                    class="w-full h-12 px-4 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-base">
-                <div class="absolute right-4 top-3.5 text-gray-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </div>
+<body class="selection:bg-blue-500/30">
+    <div id="app" class="max-w-4xl mx-auto min-h-screen flex flex-col pb-20">
+        <div class="scanline"></div>
+
+        <!-- 상단 헤더 섹션 -->
+        <header class="p-6 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div>
+                <h1 class="text-4xl md:text-5xl font-orbitron font-bold tracking-tighter flex items-center gap-3">
+                    <span class="text-white">SIGMA</span>
+                    <span class="text-blue-500">CORE</span>
+                    <span class="text-white">1.0</span>
+                </h1>
+                <p class="text-xs md:text-sm font-orbitron text-gray-500 mt-2 tracking-widest uppercase">
+                    ARCHITECTURAL DATA MANAGEMENT SYSTEM
+                </p>
+                <p class="text-[10px] md:text-xs text-blue-400/60 mt-4 italic font-light">
+                    "Though the world be false, I will remain true to myself."
+                </p>
             </div>
 
-            <!-- 필터 섹션 (Select 필드) -->
-            <div class="grid grid-cols-2 gap-2">
-                <div class="relative">
-                    <select v-model="selectedEra" 
-                        class="w-full h-10 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="전체">모든 시대</option>
-                        <option v-for="era in uniqueEras" :key="era" :value="era">{{ era }}</option>
-                    </select>
-                    <div class="absolute right-3 top-3 pointer-events-none text-gray-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </div>
+            <div class="flex gap-4 w-full md:w-auto">
+                <div class="status-box flex-1 md:w-32 p-3 text-center">
+                    <p class="text-[10px] text-gray-500 uppercase font-orbitron mb-1">INDEXED NODES</p>
+                    <p class="text-2xl font-bold text-blue-500">{{ items.length }}</p>
                 </div>
-                <div class="relative">
-                    <select v-model="selectedCategory" 
-                        class="w-full h-10 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="전체">모든 분류</option>
-                        <option v-for="cat in uniqueCategories" :key="cat" :value="cat">{{ cat }}</option>
-                    </select>
-                    <div class="absolute right-3 top-3 pointer-events-none text-gray-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </div>
+                <div class="status-box flex-1 md:w-32 p-3 text-center">
+                    <p class="text-[10px] text-gray-500 uppercase font-orbitron mb-1">SYNC INTEGRITY</p>
+                    <p class="text-2xl font-bold text-green-500">100%</p>
                 </div>
             </div>
         </header>
 
-        <!-- 카드 리스트 -->
-        <main class="p-4 space-y-4">
-            <!-- 로딩 상태 -->
-            <div v-if="loading" class="text-center py-20">
-                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                <p class="text-gray-500">데이터를 불러오는 중...</p>
+        <!-- 탭 네비게이션 -->
+        <nav class="px-6 md:px-10 border-b border-white/5 flex gap-8 mb-8">
+            <button v-for="tab in tabs" :key="tab.id"
+                @click="currentTab = tab.id"
+                :class="['pb-4 text-sm font-orbitron uppercase tracking-widest transition-colors relative', 
+                         currentTab === tab.id ? 'text-blue-500' : 'text-gray-500 hover:text-gray-300']">
+                {{ tab.name }}
+                <div v-if="currentTab === tab.id" class="absolute bottom-0 left-0 w-full h-[2px] bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]"></div>
+            </button>
+        </nav>
+
+        <!-- 검색 및 필터 섹션 -->
+        <div v-if="currentTab === 'korean_history'" class="px-6 md:px-10 mb-8">
+            <div class="status-box p-4 md:p-6 flex flex-col lg:flex-row gap-4 items-center">
+                <!-- 커스텀 검색창 -->
+                <div class="relative flex-1 w-full">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 font-orbitron">>_</span>
+                    <input type="text" v-model="searchQuery" 
+                        placeholder="시스템 쿼리 입력 (인물, 지명, 조약, 사건...)" 
+                        class="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all">
+                </div>
+                
+                <!-- 필터 셀렉트 -->
+                <div class="flex gap-3 w-full lg:w-auto">
+                    <div class="relative flex-1 lg:w-40">
+                        <select v-model="selectedEra" class="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-xs appearance-none focus:outline-none focus:border-blue-500/50">
+                            <option value="전체">전 시대 (All Eras)</option>
+                            <option v-for="era in uniqueEras" :key="era" :value="era">{{ era }}</option>
+                        </select>
+                    </div>
+                    <div class="relative flex-1 lg:w-40">
+                        <select v-model="selectedCategory" class="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-xs appearance-none focus:outline-none focus:border-blue-500/50">
+                            <option value="전체">전 분류 (Categories)</option>
+                            <option v-for="cat in uniqueCategories" :key="cat" :value="cat">{{ cat }}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 한국사 탭 콘텐츠 -->
+        <main v-if="currentTab === 'korean_history'" class="px-6 md:px-10 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div v-for="(item, idx) in filteredList" :key="idx" 
+                class="cyber-card group p-6 rounded-2xl flex flex-col justify-between min-h-[220px]">
+                
+                <div>
+                    <!-- 카드 헤더 -->
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[10px] uppercase tracking-tighter text-gray-500 font-medium">
+                                {{ item.시대 }} | {{ item.세부 }}
+                            </span>
+                            <h2 class="text-xl font-bold group-hover:text-blue-400 transition-colors">{{ item.제목 }}</h2>
+                        </div>
+                        <span class="text-[10px] font-orbitron text-blue-500 uppercase tracking-widest">{{ item.분류 }}</span>
+                    </div>
+
+                    <!-- 태그 영역 -->
+                    <div class="flex flex-wrap gap-2 mt-4">
+                        <span v-for="(tag, tIdx) in splitContent(item.내용)" :key="tIdx"
+                            class="px-3 py-1 bg-blue-500/5 border border-blue-500/20 rounded text-[11px] text-blue-400 font-medium">
+                            #{{ tag.trim() }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 카드 푸터 -->
+                <div class="mt-8 pt-4 border-t border-white/5 flex justify-between items-center opacity-40 group-hover:opacity-100 transition-opacity">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-3 h-3 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="text-[9px] font-orbitron uppercase tracking-widest">ENCRYPTED NODE</span>
+                    </div>
+                    <span class="text-[9px] font-orbitron uppercase tracking-widest text-gray-500">NODE VERIFIED</span>
+                </div>
             </div>
 
             <!-- 결과 없음 -->
-            <div v-else-if="filteredList.length === 0" class="text-center py-20">
-                <p class="text-gray-400">검색 결과가 없습니다. 🧐</p>
-                <button @click="resetFilters" class="mt-4 text-blue-500 text-sm font-semibold">필터 초기화</button>
+            <div v-if="filteredList.length === 0" class="col-span-full py-20 text-center border border-dashed border-white/10 rounded-2xl">
+                <p class="text-gray-500 font-orbitron uppercase tracking-widest">No matching nodes found in the system.</p>
+                <button @click="resetFilters" class="mt-4 text-blue-500 text-xs font-orbitron uppercase tracking-widest border border-blue-500/30 px-4 py-2 rounded-full hover:bg-blue-500/10 transition-colors">
+                    Reset Query
+                </button>
             </div>
+        </main>
 
-            <!-- 리스트 아이템 -->
-            <div v-else v-for="(item, idx) in filteredList" :key="idx" 
-                :class="['group bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow active:bg-gray-50', getCategoryClass(item.분류)]">
-                <div class="flex flex-wrap gap-2 mb-3">
-                    <span :class="['inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold', getEraClass(item.시대)]">
-                        {{ item.시대 }}
-                    </span>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                        {{ item.분류 }}
-                    </span>
-                    <span v-if="item.세부" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-600">
-                        {{ item.세부 }}
-                    </span>
-                </div>
-                <h2 class="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">{{ item.제목 }}</h2>
-                
-                <!-- 내용 파트: / 구분자를 #태그로 변경 -->
-                <div class="flex flex-wrap gap-1.5 mt-2">
-                    <template v-for="(tag, tIdx) in splitContent(item.내용)" :key="tIdx">
-                        <span v-if="tag.trim()" class="inline-block text-[13px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md font-medium">
-                            #{{ tag.trim() }}
-                        </span>
-                    </template>
+        <!-- 다른 탭 placeholder -->
+        <main v-else class="px-6 md:px-10 py-20 text-center">
+            <div class="status-box p-10 border-dashed border-white/10">
+                <h3 class="text-xl font-orbitron text-gray-600 mb-2">ACCESS RESTRICTED</h3>
+                <p class="text-xs text-gray-700 font-orbitron tracking-widest uppercase">This sector is currently under construction or encrypted.</p>
+                <div class="mt-8 flex justify-center gap-2">
+                    <div class="w-1 h-1 bg-blue-500 animate-pulse"></div>
+                    <div class="w-1 h-1 bg-blue-500 animate-pulse delay-75"></div>
+                    <div class="w-1 h-1 bg-blue-500 animate-pulse delay-150"></div>
                 </div>
             </div>
         </main>
 
-        <!-- 하단 플로팅 버튼 (맨 위로) -->
+        <!-- 하단 플로팅 버튼 -->
         <button @click="scrollToTop" 
-            class="fixed bottom-6 right-6 w-12 h-12 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center focus:outline-none active:scale-90 transition-transform"
+            class="fixed bottom-8 right-8 w-14 h-14 glass-panel text-blue-500 rounded-xl flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all active:scale-90 z-50 shadow-[0_0_20px_rgba(59,130,246,0.2)]"
             v-show="showScrollTop">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11l7-7m0 0l7 7m-7-7v18" />
             </svg>
         </button>
     </div>
@@ -215,19 +242,21 @@
                 const selectedEra = ref('전체');
                 const selectedCategory = ref('전체');
                 const showScrollTop = ref(false);
+                const currentTab = ref('korean_history');
 
-                // FIXME: 구글 스프레드시트 CSV URL을 여기에 넣으세요
+                const tabs = ref([
+                    { id: 'korean_history', name: '한국사 (KOR History)' },
+                    { id: 'world_history', name: '세계사 (World History)' },
+                    { id: 'settings', name: '설정 (System Settings)' }
+                ]);
+
                 const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQE3ia0nwvZ99-e5SF707qTXOq1Vttc8urdPis0KiL7pHfduNdFawGElyYum3wrtl3yzHMdtSw5erix/pub?output=csv';
 
-                // 데이터 불러오기
                 const fetchData = async () => {
                     loading.value = true;
                     try {
                         const response = await fetch(csvUrl);
-                        if (!response.ok) throw new Error('네트워크 응답이 좋지 않습니다.');
-                        
                         const csvText = await response.text();
-                        
                         Papa.parse(csvText, {
                             header: true,
                             skipEmptyLines: true,
@@ -237,99 +266,40 @@
                             }
                         });
                     } catch (err) {
-                        console.error('데이터 로드 실패:', err);
-                        let message = '데이터를 불러오는데 실패했습니다.';
-                        if (location.protocol === 'file:') {
-                            message += '\n\n인터넷 보안 설정으로 인해 로컬 파일에서는 데이터를 불러올 수 없을 수 있습니다. 파일을 서버(GitHub 등)에 올리거나 VS Code의 Live Server로 실행해주세요.';
-                        }
-                        alert(message);
+                        console.error('Data sync failed:', err);
                         loading.value = false;
                     }
                 };
 
-                // 유니크한 시대/분류 목록 추출
                 const uniqueEras = computed(() => [...new Set(items.value.map(i => i['시대']))].filter(Boolean));
                 const uniqueCategories = computed(() => [...new Set(items.value.map(i => i['분류']))].filter(Boolean));
 
-                // 실시간 필터링 로직
                 const filteredList = computed(() => {
                     return items.value.filter(item => {
                         const s = searchQuery.value.toLowerCase();
-                        // 모든 키워드(시대, 세부, 분류, 제목, 내용)에서 검색 가능하게 수정
                         const searchableText = `${item['시대']} ${item['세부']} ${item['분류']} ${item['제목']} ${item['내용']}`.toLowerCase();
                         const matchSearch = searchableText.includes(s);
-                        
                         const matchEra = selectedEra.value === '전체' || item['시대'] === selectedEra.value;
                         const matchCat = selectedCategory.value === '전체' || item['분류'] === selectedCategory.value;
-                        
                         return matchSearch && matchEra && matchCat;
                     });
                 });
 
-                const resetFilters = () => {
-                    searchQuery.value = '';
-                    selectedEra.value = '전체';
-                    selectedCategory.value = '전체';
-                };
+                const splitContent = (content) => content ? content.split('/') : [];
+                const resetFilters = () => { searchQuery.value = ''; selectedEra.value = '전체'; selectedCategory.value = '전체'; };
+                const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+                const handleScroll = () => showScrollTop.value = window.scrollY > 300;
 
-                const scrollToTop = () => {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                };
-
-                const handleScroll = () => {
-                    showScrollTop.value = window.scrollY > 300;
-                };
-
-                // 태그 분리 로직 (내용 중 / 기준)
-                const splitContent = (content) => {
-                    if (!content) return [];
-                    return content.split('/');
-                };
-
-                // 시대별 색상 클래스 반환
-                const getEraClass = (era) => {
-                    const eraMap = {
-                        '전삼국시대': 'era-전삼국시대',
-                        '삼국시대': 'era-삼국시대',
-                        '남북국시대': 'era-남북국시대',
-                        '고려': 'era-고려',
-                        '조선': 'era-조선',
-                        '근대': 'era-근대',
-                        '일제강점기': 'era-일제강점기',
-                        '현대': 'era-현대'
-                    };
-                    return eraMap[era] || 'era-default';
-                };
-
-                // 분류별 왼쪽 바 색상 클래스 반환
-                const getCategoryClass = (cat) => {
-                    const catMap = {
-                        '정치': 'cat-정치',
-                        '경제': 'cat-경제',
-                        '사회': 'cat-사회',
-                        '문화': 'cat-문화',
-                        '인물': 'cat-인물'
-                    };
-                    return catMap[cat] || 'cat-default';
-                };
-
-                onMounted(() => {
-                    fetchData();
-                    window.addEventListener('scroll', handleScroll);
-                });
-
-                onUnmounted(() => {
-                    window.removeEventListener('scroll', handleScroll);
-                });
+                onMounted(() => { fetchData(); window.addEventListener('scroll', handleScroll); });
+                onUnmounted(() => window.removeEventListener('scroll', handleScroll));
 
                 return {
                     items, loading, searchQuery, selectedEra, selectedCategory,
                     uniqueEras, uniqueCategories, filteredList, resetFilters,
-                    showScrollTop, scrollToTop, splitContent, getEraClass, getCategoryClass
+                    showScrollTop, scrollToTop, splitContent, currentTab, tabs
                 };
             }
         }).mount('#app');
     </script>
 </body>
 </html>
-
