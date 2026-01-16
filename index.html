@@ -346,7 +346,7 @@
                 const showScoreInput = ref(false);
                 const newScore = ref(null);
                 const scoreHistory = ref(JSON.parse(localStorage.getItem('sigma-scores') || '[]'));
-                const examDate = ref(null); // 구글 시트에서 받아올 예정
+                const examDates = ref({}); // 과목별 시험 날짜 저장용 객체
 
                 // 로컬 스토리지 데이터 안전하게 가져오기
                 const savedFontSize = localStorage.getItem('sigma-font-size');
@@ -394,13 +394,15 @@
                             header: true,
                             skipEmptyLines: true,
                             complete: (results) => {
-                                // 1. 시험 날짜 설정 (제목이 EXAM_DATE인 행 찾기)
-                                const configRow = results.data.find(row => row['대주제'] === 'EXAM_DATE' || row['제목'] === 'EXAM_DATE');
-                                if (configRow && configRow['내용']) {
-                                    examDate.value = new Date(configRow['내용']);
-                                } else {
-                                    examDate.value = new Date('2026-02-07'); // 기본값
-                                }
+                                // 1. 과목별 시험 날짜 설정 (EXAM_DATE 행 모두 찾기)
+                                const configRows = results.data.filter(row => row['대주제'] === 'EXAM_DATE' || row['제목'] === 'EXAM_DATE');
+                                const dates = {};
+                                configRows.forEach(row => {
+                                    if (row['과목분류'] && row['내용']) {
+                                        dates[row['과목분류']] = new Date(row['내용']);
+                                    }
+                                });
+                                examDates.value = dates;
 
                                 // 2. 아이템 로드 (설정 행 제외)
                                 items.value = results.data
@@ -420,10 +422,13 @@
                 };
 
                 const dDay = computed(() => {
-                    if (!examDate.value || isNaN(examDate.value.getTime())) return 0;
+                    const currentTabObj = tabs.value.find(t => t.id === currentTab.value);
+                    const targetDate = examDates.value[currentTabObj?.category] || new Date('2026-02-07');
+                    
+                    if (isNaN(targetDate.getTime())) return 0;
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
-                    const diff = examDate.value - today;
+                    const diff = targetDate - today;
                     return Math.ceil(diff / (1000 * 60 * 60 * 24));
                 });
 
