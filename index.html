@@ -292,6 +292,16 @@
                 const savedFontSize = localStorage.getItem('sigma-font-size');
                 const fontSize = ref(savedFontSize ? parseInt(savedFontSize) : 14);
                 
+                const currentFont = ref(localStorage.getItem('sigma-font-family') || 'Pretendard');
+
+                const fontOptions = [
+                    { name: '프리텐다드', value: 'Pretendard' },
+                    { name: '노토산스', value: 'Noto Sans KR' },
+                    { name: '나눔고딕', value: 'Nanum Gothic' },
+                    { name: '나눔명조', value: 'Nanum Myeongjo' },
+                    { name: '감자꽃', value: 'Gamja Flower' }
+                ];
+
                 let initialCounts = {};
                 try {
                     const savedCounts = localStorage.getItem('sigma-view-counts');
@@ -393,6 +403,10 @@
 
                 watch(fontSize, (newVal) => {
                     localStorage.setItem('sigma-font-size', newVal);
+                });
+
+                watch(currentFont, (newVal) => {
+                    localStorage.setItem('sigma-font-family', newVal);
                 });
 
                 onMounted(() => { fetchData(); window.addEventListener('scroll', handleScroll); });
