@@ -207,7 +207,7 @@
             </div>
 
             <!-- 결과 없음 -->
-            <div v-if="filteredList.length === 0" class="col-span-full py-20 text-center border border-dashed border-white/10 rounded-2xl">
+            <div v-if="sortedFilteredList.length === 0" class="col-span-full py-20 text-center border border-dashed border-white/10 rounded-2xl">
                 <p class="text-gray-500 font-orbitron uppercase tracking-widest">No matching nodes found in the system.</p>
                 <button @click="resetFilters" class="mt-4 text-blue-500 text-xs font-orbitron uppercase tracking-widest border border-blue-500/30 px-4 py-2 rounded-full hover:bg-blue-500/10 transition-colors">
                     Reset Query
