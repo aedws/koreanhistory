@@ -4,7 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>한국사 키워드 암기장</title>
+    <script>
+        // 다크모드 설정 초기화
+        if (localStorage.getItem('darkMode') === 'true' || 
+            (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
     <!-- Tailwind CSS -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            bg: '#121212',
+                            card: '#1e1e1e',
+                            header: '#1e1e1e',
+                            text: '#e0e0e0',
+                            subtext: '#b0b0b0'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Vue.js 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -12,10 +37,69 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap');
-        body { font-family: 'Pretendard', sans-serif; }
+        body { font-family: 'Pretendard', sans-serif; transition: background-color 0.3s; }
         .sticky-header { position: sticky; top: 0; z-index: 50; }
         /* Remove blue highlight on mobile tap */
         * { -webkit-tap-highlight-color: transparent; }
+
+        /* 다크모드 설정 */
+        @media (prefers-color-scheme: dark) {
+            :root { color-scheme: dark; }
+            body { background-color: #111827 !important; color: #f3f4f6 !important; }
+            #app { background-color: #111827 !important; }
+            .bg-white { background-color: #1f2937 !important; }
+            .bg-gray-50 { background-color: #111827 !important; }
+            .bg-gray-100 { background-color: #374151 !important; }
+            .border-gray-100 { border-color: #374151 !important; }
+            .border-b { border-color: #374151 !important; }
+            .text-gray-900 { color: #f9fafb !important; }
+            .text-gray-600 { color: #d1d5db !important; }
+            .text-gray-400 { color: #9ca3af !important; }
+            input, select { background-color: #374151 !important; border-color: #4b5563 !important; color: #f9fafb !important; }
+            .sticky-header { background-color: rgba(31, 41, 55, 0.8) !important; border-bottom-color: #374151 !important; }
+            .bg-blue-50 { background-color: #1e3a8a !important; color: #bfdbfe !important; }
+            .bg-blue-100 { background-color: #1e3a8a !important; color: #93c5fd !important; }
+            .bg-amber-50 { background-color: #451a03 !important; color: #fcd34d !important; }
+            .text-blue-600 { color: #60a5fa !important; }
+            .text-blue-700 { color: #93c5fd !important; }
+        }
+
+        /* 시대별 색상 정의 (다크모드 대응) */
+        .era-전삼국시대 { background-color: #fef3c7; color: #92400e; }
+        .era-삼국시대 { background-color: #dcfce7; color: #166534; }
+        .era-남북국시대 { background-color: #e0f2fe; color: #075985; }
+        .era-고려 { background-color: #f3e8ff; color: #6b21a8; }
+        .era-조선 { background-color: #fee2e2; color: #991b1b; }
+        .era-근대 { background-color: #ffedd5; color: #9a3412; }
+        .era-일제강점기 { background-color: #f1f5f9; color: #334155; }
+        .era-현대 { background-color: #ecfdf5; color: #065f46; }
+        .era-default { background-color: #f3f4f6; color: #374151; }
+
+        @media (prefers-color-scheme: dark) {
+            .era-전삼국시대 { background-color: #451a03; color: #fdba74; }
+            .era-삼국시대 { background-color: #064e3b; color: #6ee7b7; }
+            .era-남북국시대 { background-color: #0c4a6e; color: #7dd3fc; }
+            .era-고려 { background-color: #4c1d95; color: #ddd6fe; }
+            .era-조선 { background-color: #7f1d1d; color: #fca5a5; }
+            .era-근대 { background-color: #7c2d12; color: #fdba74; }
+            .era-일제강점기 { background-color: #334155; color: #cbd5e1; }
+            .era-현대 { background-color: #064e3b; color: #6ee7b7; }
+        }
+        .dark .era-삼국시대 { background-color: #052e16; color: #86efac; }
+        .dark .era-남북국시대 { background-color: #082f49; color: #7dd3fc; }
+        .dark .era-고려 { background-color: #2e1065; color: #d8b4fe; }
+        .dark .era-조선 { background-color: #450a0a; color: #fca5a5; }
+        .dark .era-근대 { background-color: #431407; color: #fdba74; }
+        .dark .era-일제강점기 { background-color: #1e293b; color: #cbd5e1; }
+        .dark .era-현대 { background-color: #064e3b; color: #6ee7b7; }
+
+        /* 분류별 색상 정의 */
+        .cat-정치 { border-left: 4px solid #3b82f6; }
+        .cat-경제 { border-left: 4px solid #10b981; }
+        .cat-사회 { border-left: 4px solid #f59e0b; }
+        .cat-문화 { border-left: 4px solid #8b5cf6; }
+        .cat-인물 { border-left: 4px solid #ef4444; }
+        .cat-default { border-left: 4px solid #d1d5db; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900">
@@ -85,9 +169,9 @@
 
             <!-- 리스트 아이템 -->
             <div v-else v-for="(item, idx) in filteredList" :key="idx" 
-                class="group bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow active:bg-gray-50">
+                :class="['group bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow active:bg-gray-50', getCategoryClass(item.분류)]">
                 <div class="flex flex-wrap gap-2 mb-3">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
+                    <span :class="['inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold', getEraClass(item.시대)]">
                         {{ item.시대 }}
                     </span>
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
@@ -98,8 +182,14 @@
                     </span>
                 </div>
                 <h2 class="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">{{ item.제목 }}</h2>
-                <div class="text-sm text-gray-600 leading-relaxed break-keep whitespace-pre-wrap">
-                    {{ item.내용 }}
+                
+                <!-- 내용 파트: / 구분자를 #태그로 변경 -->
+                <div class="flex flex-wrap gap-1.5 mt-2">
+                    <template v-for="(tag, tIdx) in splitContent(item.내용)" :key="tIdx">
+                        <span v-if="tag.trim()" class="inline-block text-[13px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md font-medium">
+                            #{{ tag.trim() }}
+                        </span>
+                    </template>
                 </div>
             </div>
         </main>
@@ -165,8 +255,10 @@
                 const filteredList = computed(() => {
                     return items.value.filter(item => {
                         const s = searchQuery.value.toLowerCase();
-                        const matchSearch = (item['제목'] || '').toLowerCase().includes(s) || 
-                                           (item['내용'] || '').toLowerCase().includes(s);
+                        // 모든 키워드(시대, 세부, 분류, 제목, 내용)에서 검색 가능하게 수정
+                        const searchableText = `${item['시대']} ${item['세부']} ${item['분류']} ${item['제목']} ${item['내용']}`.toLowerCase();
+                        const matchSearch = searchableText.includes(s);
+                        
                         const matchEra = selectedEra.value === '전체' || item['시대'] === selectedEra.value;
                         const matchCat = selectedCategory.value === '전체' || item['분류'] === selectedCategory.value;
                         
@@ -188,6 +280,39 @@
                     showScrollTop.value = window.scrollY > 300;
                 };
 
+                // 태그 분리 로직 (내용 중 / 기준)
+                const splitContent = (content) => {
+                    if (!content) return [];
+                    return content.split('/');
+                };
+
+                // 시대별 색상 클래스 반환
+                const getEraClass = (era) => {
+                    const eraMap = {
+                        '전삼국시대': 'era-전삼국시대',
+                        '삼국시대': 'era-삼국시대',
+                        '남북국시대': 'era-남북국시대',
+                        '고려': 'era-고려',
+                        '조선': 'era-조선',
+                        '근대': 'era-근대',
+                        '일제강점기': 'era-일제강점기',
+                        '현대': 'era-현대'
+                    };
+                    return eraMap[era] || 'era-default';
+                };
+
+                // 분류별 왼쪽 바 색상 클래스 반환
+                const getCategoryClass = (cat) => {
+                    const catMap = {
+                        '정치': 'cat-정치',
+                        '경제': 'cat-경제',
+                        '사회': 'cat-사회',
+                        '문화': 'cat-문화',
+                        '인물': 'cat-인물'
+                    };
+                    return catMap[cat] || 'cat-default';
+                };
+
                 onMounted(() => {
                     fetchData();
                     window.addEventListener('scroll', handleScroll);
@@ -200,7 +325,7 @@
                 return {
                     items, loading, searchQuery, selectedEra, selectedCategory,
                     uniqueEras, uniqueCategories, filteredList, resetFilters,
-                    showScrollTop, scrollToTop
+                    showScrollTop, scrollToTop, splitContent, getEraClass, getCategoryClass
                 };
             }
         }).mount('#app');
