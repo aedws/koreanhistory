@@ -213,7 +213,7 @@
             </div>
 
             <!-- 결과 없음 -->
-            <div v-if="filteredList.length === 0" class="col-span-full py-20 text-center border border-dashed border-white/10 rounded-2xl">
+            <div v-if="sortedFilteredList && sortedFilteredList.length === 0" class="col-span-full py-20 text-center border border-dashed border-white/10 rounded-2xl">
                 <p class="text-gray-500 font-orbitron uppercase tracking-widest">No matching nodes found in the system.</p>
                 <button @click="resetFilters" class="mt-4 text-blue-500 text-xs font-orbitron uppercase tracking-widest border border-blue-500/30 px-4 py-2 rounded-full hover:bg-blue-500/10 transition-colors">
                     Reset Query
@@ -359,15 +359,24 @@
                     // 로딩 중이거나 한국사 탭이 아닐 때만 0으로 표시
                     if (loading.value) return 0;
                     if (currentTab.value !== 'korean_history') return 0;
-                    return sortedFilteredList.value.length;
+                    
+                    const list = sortedFilteredList.value;
+                    return list ? list.length : 0;
                 });
 
                 const sortedFilteredList = computed(() => {
                     if (!items.value || items.value.length === 0) return [];
                     
                     const filtered = items.value.filter(item => {
+                        if (!item) return false;
                         const s = searchQuery.value.toLowerCase();
-                        const searchableText = `${item['시대']} ${item['세부']} ${item['분류']} ${item['제목']} ${item['내용']}`.toLowerCase();
+                        const era = String(item['시대'] || '');
+                        const sub = String(item['세부'] || '');
+                        const cat = String(item['분류'] || '');
+                        const title = String(item['제목'] || '');
+                        const content = String(item['내용'] || '');
+                        
+                        const searchableText = `${era} ${sub} ${cat} ${title} ${content}`.toLowerCase();
                         const matchSearch = searchableText.includes(s);
                         const matchEra = selectedEra.value === '전체' || item['시대'] === selectedEra.value;
                         const matchCat = selectedCategory.value === '전체' || item['분류'] === selectedCategory.value;
