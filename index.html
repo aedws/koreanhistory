@@ -13,6 +13,8 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Pretendard:wght@400;600;700&display=swap');
         
+        [v-cloak] { display: none; }
+
         :root {
             color-scheme: dark;
         }
@@ -94,7 +96,7 @@
     </style>
 </head>
 <body class="selection:bg-blue-500/30">
-    <div id="app" class="max-w-4xl mx-auto min-h-screen flex flex-col pb-20" :style="{'--base-font-size': fontSize + 'px', '--title-font-size': (Number(fontSize) + 4) + 'px'}">
+    <div id="app" v-cloak class="max-w-4xl mx-auto min-h-screen flex flex-col pb-20" :style="{'--base-font-size': fontSize + 'px', '--title-font-size': (parseInt(fontSize) + 4) + 'px'}">
         <div class="scanline"></div>
 
         <!-- 상단 헤더 섹션 -->
@@ -279,8 +281,19 @@
                 const selectedCategory = ref('전체');
                 const showScrollTop = ref(false);
                 const currentTab = ref('korean_history');
-                const fontSize = ref(localStorage.getItem('sigma-font-size') || 14);
-                const viewCounts = ref(JSON.parse(localStorage.getItem('sigma-view-counts') || '{}'));
+                
+                // 로컬 스토리지 데이터 안전하게 가져오기
+                const savedFontSize = localStorage.getItem('sigma-font-size');
+                const fontSize = ref(savedFontSize ? parseInt(savedFontSize) : 14);
+                
+                let initialCounts = {};
+                try {
+                    const savedCounts = localStorage.getItem('sigma-view-counts');
+                    if (savedCounts) initialCounts = JSON.parse(savedCounts);
+                } catch (e) {
+                    console.error('Error loading view counts:', e);
+                }
+                const viewCounts = ref(initialCounts);
 
                 const tabs = ref([
                     { id: 'korean_history', name: '한국사' },
