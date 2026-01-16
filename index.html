@@ -221,9 +221,16 @@
                     <div class="flex justify-between items-start mb-4">
                         <div class="flex flex-col gap-1">
                             <span class="text-[10px] uppercase tracking-tighter text-gray-500 font-medium">
-                                {{ item.분류 }}
+                                <template v-if="currentTab === 'korean_history'">
+                                    {{ item.시대 }} | {{ item.세부 }} | {{ item.분류 }}
+                                </template>
+                                <template v-else>
+                                    {{ item.과목분류 }}
+                                </template>
                             </span>
-                            <h2 class="font-bold group-hover:text-blue-400 transition-colors text-title-custom">{{ item.대주제 }}</h2>
+                            <h2 class="font-bold group-hover:text-blue-400 transition-colors text-title-custom">
+                                {{ item.대주제 || item.제목 }}
+                            </h2>
                         </div>
                         <div class="flex flex-col items-end gap-1">
                             <span v-if="getViewCount(item.id) > 0" class="text-[9px] font-orbitron text-green-500/60">ACCESS: {{ getViewCount(item.id) }}</span>
@@ -388,10 +395,10 @@
                             skipEmptyLines: true,
                             complete: (results) => {
                                 items.value = results.data
-                                    .filter(row => row['대주제'] || row['내용'])
+                                    .filter(row => row['대주제'] || row['제목'] || row['내용'])
                                     .map((row, index) => ({
                                         ...row,
-                                        id: (row['대주제'] || 'no-title') + '_' + (row['분류'] || 'no-cat') + '_' + index
+                                        id: (row['대주제'] || row['제목'] || 'no-title') + '_' + (row['과목분류'] || 'no-cat') + '_' + index
                                     }));
                                 loading.value = false;
                             }
@@ -430,15 +437,19 @@
                 const uniqueEras = computed(() => {
                     const filteredItems = items.value.filter(item => {
                         const currentTabObj = tabs.value.find(t => t.id === currentTab.value);
-                        return item['분류'] === currentTabObj?.category;
+                        return item['과목분류'] === currentTabObj?.category;
                     });
-                    // 대주제를 필터로 사용 (바뀐 구조 대응)
-                    return [...new Set(filteredItems.map(i => i['대주제']))].filter(Boolean);
+                    // 한국사는 '시대', 나머지는 '대주제'를 필터로 사용
+                    const filterKey = currentTab.value === 'korean_history' ? '시대' : '대주제';
+                    return [...new Set(filteredItems.map(i => i[filterKey]))].filter(Boolean);
                 });
-                
+
                 const uniqueCategories = computed(() => {
-                    // 현재 구조에서는 분류가 탭 구분이므로, 세부 카테고리가 필요하다면 추가 로직 필요
-                    // 일단은 비워두거나 제목의 앞부분을 활용 가능
+                    // 한국사 탭에서만 '분류' 컬럼으로 추가 필터링 가능하게 설정
+                    if (currentTab.value === 'korean_history') {
+                        const filteredItems = items.value.filter(item => item['과목분류'] === '한국사');
+                        return [...new Set(filteredItems.map(i => i['분류']))].filter(Boolean);
+                    }
                     return [];
                 });
 
@@ -463,18 +474,31 @@
                     const filtered = items.value.filter(item => {
                         if (!item) return false;
                         
-                        // 1. 탭 카테고리 매칭 (한국사, 형법 총론 등)
-                        if (item['분류'] !== currentTabObj.category) return false;
+                        // 1. 과목 매칭 (과목분류 컬럼 기준)
+                        if (item['과목분류'] !== currentTabObj.category) return false;
 
                         // 2. 검색어 필터링
                         const s = searchQuery.value.toLowerCase();
-                        const searchableText = `${item['분류']} ${item['대주제']} ${item['내용']}`.toLowerCase();
+                        const era = String(item['시대'] || '');
+                        const sub = String(item['세부'] || '');
+                        const cat = String(item['분류'] || '');
+                        const title = String(item['대주제'] || item['제목'] || '');
+                        const content = String(item['내용'] || '');
+                        
+                        const searchableText = `${era} ${sub} ${cat} ${title} ${content}`.toLowerCase();
                         const matchSearch = searchableText.includes(s);
                         
-                        // 3. 필터(대주제) 매칭
-                        const matchEra = selectedEra.value === '전체' || item['대주제'] === selectedEra.value;
+                        // 3. 필터링 (한국사: 시대 & 분류 / 법학: 대주제)
+                        let matchFilter = true;
+                        if (currentTab.value === 'korean_history') {
+                            const matchEra = selectedEra.value === '전체' || item['시대'] === selectedEra.value;
+                            const matchCat = selectedCategory.value === '전체' || item['분류'] === selectedCategory.value;
+                            matchFilter = matchEra && matchCat;
+                        } else {
+                            matchFilter = selectedEra.value === '전체' || item['대주제'] === selectedEra.value;
+                        }
                         
-                        return matchSearch && matchEra;
+                        return matchSearch && matchFilter;
                     });
 
                     // 터치 횟수(조회수) 순으로 내림차순 정렬
