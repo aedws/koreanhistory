@@ -24,6 +24,57 @@
             background-color: #000000;
             color: #ffffff;
             -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+
+        /* 사이버펑크 노이즈 효과 */
+        .cyber-noise {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.02;
+            background: url('https://www.transparenttextures.com/patterns/stardust.png');
+            animation: noise-flicker 0.2s infinite;
+        }
+
+        @keyframes noise-flicker {
+            0% { transform: translate(0,0); }
+            10% { transform: translate(-0.5%,-0.5%); }
+            20% { transform: translate(0.5%,0.5%); }
+            30% { transform: translate(-1%,0.5%); }
+            40% { transform: translate(1%,-0.5%); }
+            50% { transform: translate(-0.5%,1%); }
+            60% { transform: translate(0.5%,-1%); }
+            70% { transform: translate(1%,1%); }
+            80% { transform: translate(-1%,-1%); }
+            90% { transform: translate(0.5%,0.5%); }
+            100% { transform: translate(0,0); }
+        }
+
+        /* 가끔 발생하는 글리치 효과 */
+        .glitch-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(59, 130, 246, 0.02);
+            pointer-events: none;
+            z-index: 9998;
+            animation: periodic-glitch 10s infinite;
+            opacity: 0;
+        }
+
+        @keyframes periodic-glitch {
+            0%, 95%, 100% { opacity: 0; transform: scaleY(1); }
+            96% { opacity: 1; transform: scaleY(1.01) skewX(1deg); }
+            97% { opacity: 0; }
+            98% { opacity: 0.5; transform: scaleY(0.99) skewX(-1deg); }
+            99% { opacity: 0; }
         }
 
         .font-orbitron { font-family: 'Orbitron', sans-serif; }
@@ -96,18 +147,16 @@
     </style>
 </head>
 <body class="selection:bg-blue-500/30">
-    <div id="app" v-cloak class="max-w-4xl mx-auto min-h-screen flex flex-col pb-20" :style="{'--base-font-size': fontSize + 'px', '--title-font-size': (parseInt(fontSize) + 4) + 'px'}">
+    <div class="cyber-noise"></div>
+    <div class="glitch-overlay"></div>
+    <div id="app" v-cloak class="max-w-4xl mx-auto min-h-screen flex flex-col pb-20" :style="{'--base-font-size': fontSize + 'px', '--title-font-size': (parseInt(fontSize) + 4) + 'px', '--selected-font': currentFont}">
         <div class="scanline"></div>
 
         <!-- 상단 헤더 섹션 -->
         <header class="p-6 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div>
                 <h1 class="text-4xl md:text-5xl font-orbitron font-bold tracking-tighter flex items-center gap-3">
-                    <span class="text-blue-500">
-                        <svg class="w-10 h-10 md:w-12 md:h-12" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2L4 5V11C4 16.07 7.41 20.85 12 22C16.59 20.85 20 16.07 20 11V5L12 2ZM12 7C13.1 7 14 7.9 14 9C14 10.1 13.1 11 12 11C10.9 11 10 10.1 10 9C10 7.9 10.9 7 12 7ZM17 15H7V14C7 12.34 10.33 11.5 12 11.5C13.67 11.5 17 12.34 17 14V15Z"/>
-                        </svg>
-                    </span>
+                    <span class="text-4xl md:text-5xl">👮</span>
                     <span class="text-white">INSPECTOR</span>
                     <span class="text-blue-500">SIGMA</span>
                     <span class="text-white">1.0</span>
