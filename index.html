@@ -448,7 +448,8 @@
 
                 const dDay = computed(() => {
                     const currentTabObj = tabs.value.find(t => t.id === currentTab.value);
-                    const targetDate = examDates.value[currentTabObj?.category] || new Date('2026-02-07');
+                    const targetCat = currentTabObj?.category?.replace(/\s+/g, ''); // 탭 이름 공백 제거
+                    const targetDate = examDates.value[targetCat] || new Date('2026-02-07');
                     
                     if (isNaN(targetDate.getTime())) return 0;
                     const today = new Date();
