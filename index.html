@@ -156,12 +156,14 @@
                 
                 <!-- 필터 셀렉트 -->
                 <div class="flex gap-3 w-full lg:w-auto">
-                    <div class="relative flex-1 lg:w-40">
+                    <!-- 한국사에서만 표시되는 시대 필터 -->
+                    <div v-if="currentTab === 'korean_history'" class="relative flex-1 lg:w-40">
                         <select v-model="selectedEra" class="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-xs appearance-none focus:outline-none focus:border-blue-500/50">
                             <option value="전체">전 시대 (All Eras)</option>
                             <option v-for="era in uniqueEras" :key="era" :value="era">{{ era }}</option>
                         </select>
                     </div>
+                    <!-- 공통 분류 필터 -->
                     <div class="relative flex-1 lg:w-40">
                         <select v-model="selectedCategory" class="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-xs appearance-none focus:outline-none focus:border-blue-500/50">
                             <option value="전체">전 분류 (Categories)</option>
@@ -450,22 +452,18 @@
                 };
 
                 const uniqueEras = computed(() => {
-                    const filteredItems = items.value.filter(item => {
-                        const currentTabObj = tabs.value.find(t => t.id === currentTab.value);
-                        return item['과목분류'] === currentTabObj?.category;
-                    });
-                    // 한국사는 '시대', 나머지는 '대주제'를 필터로 사용
-                    const filterKey = currentTab.value === 'korean_history' ? '시대' : '대주제';
-                    return [...new Set(filteredItems.map(i => i[filterKey]))].filter(Boolean);
+                    if (currentTab.value !== 'korean_history') return [];
+                    const filteredItems = items.value.filter(item => item['과목분류'] === '한국사');
+                    return [...new Set(filteredItems.map(i => i['시대']))].filter(Boolean);
                 });
 
                 const uniqueCategories = computed(() => {
-                    // 한국사 탭에서만 '분류' 컬럼으로 추가 필터링 가능하게 설정
-                    if (currentTab.value === 'korean_history') {
-                        const filteredItems = items.value.filter(item => item['과목분류'] === '한국사');
-                        return [...new Set(filteredItems.map(i => i['분류']))].filter(Boolean);
-                    }
-                    return [];
+                    const currentTabObj = tabs.value.find(t => t.id === currentTab.value);
+                    if (!currentTabObj?.category) return [];
+                    
+                    const filteredItems = items.value.filter(item => item['과목분류'] === currentTabObj.category);
+                    // 한국사는 '분류' 컬럼 사용, 나머지도 '분류' 혹은 '대주제' 컬럼 사용
+                    return [...new Set(filteredItems.map(i => i['분류'] || i['대주제']))].filter(Boolean);
                 });
 
                 const isDataTab = computed(() => {
@@ -503,14 +501,16 @@
                         const searchableText = `${era} ${sub} ${cat} ${title} ${content}`.toLowerCase();
                         const matchSearch = searchableText.includes(s);
                         
-                        // 3. 필터링 (한국사: 시대 & 분류 / 법학: 대주제)
+                        // 3. 필터링 (한국사: 시대 & 분류 / 법학: 분류)
                         let matchFilter = true;
                         if (currentTab.value === 'korean_history') {
                             const matchEra = selectedEra.value === '전체' || item['시대'] === selectedEra.value;
                             const matchCat = selectedCategory.value === '전체' || item['분류'] === selectedCategory.value;
                             matchFilter = matchEra && matchCat;
                         } else {
-                            matchFilter = selectedEra.value === '전체' || item['대주제'] === selectedEra.value;
+                            // 나머지는 분류(또는 대주제) 필터만 사용
+                            matchFilter = selectedCategory.value === '전체' || 
+                                         (item['분류'] || item['대주제']) === selectedCategory.value;
                         }
                         
                         return matchSearch && matchFilter;
