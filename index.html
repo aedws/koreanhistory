@@ -249,9 +249,11 @@
                     <!-- 법학 탭용 리스트 뷰 -->
                     <div v-else class="space-y-2 mt-4 text-base-custom text-gray-300 leading-relaxed">
                         <div v-for="(line, lIdx) in renderLawContent(item.내용)" :key="lIdx" 
-                            :class="['flex gap-2', line.startsWith('-') ? 'pl-4 text-gray-400' : '']">
-                            <span v-if="!line.startsWith('-')" class="text-blue-500 mt-1">▶</span>
-                            <span>{{ line.startsWith('-') ? line.substring(1).trim() : line }}</span>
+                            :class="['flex gap-2 transition-all duration-300', line.level > 0 ? 'border-l border-white/5' : '']"
+                            :style="{ paddingLeft: (line.level * 1.5) + 'rem' }">
+                            <span v-if="line.level === 0" class="text-blue-500 mt-1 shrink-0">▶</span>
+                            <span v-else class="text-gray-600 mt-1 shrink-0">•</span>
+                            <span class="break-keep" v-html="highlightText(line.text)"></span>
                         </div>
                     </div>
                 </div>
@@ -385,38 +387,59 @@
                     { id: 'settings', name: '설정' }
                 ]);
 
-                const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQE3ia0nwvZ99-e5SF707qTXOq1Vttc8urdPis0KiL7pHfduNdFawGElyYum3wrtl3yzHMdtSw5erix/pub?output=csv';
+                const csvUrls = {
+                    korean_history: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQE3ia0nwvZ99-e5SF707qTXOq1Vttc8urdPis0KiL7pHfduNdFawGElyYum3wrtl3yzHMdtSw5erix/pub?output=csv',
+                    criminal_law_general: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT7EyNB1Shov5WaCaJ2wO6ZnupafraI1jKKG5nsRRPCfaO0r_p_n_uqR0N9c304d6-cS0fKG-iRN6PQ/pub?output=csv'
+                };
 
                 const fetchData = async () => {
                     loading.value = true;
+                    items.value = []; // 초기화
+                    
                     try {
-                        const response = await fetch(csvUrl + '&t=' + new Date().getTime());
-                        const csvText = await response.text();
-                        Papa.parse(csvText, {
-                            header: true,
-                            skipEmptyLines: true,
-                            complete: (results) => {
-                                // 1. 과목별 시험 날짜 설정 (EXAM_DATE 행 모두 찾기)
-                                const configRows = results.data.filter(row => row['대주제'] === 'EXAM_DATE' || row['제목'] === 'EXAM_DATE');
-                                const dates = {};
-                                configRows.forEach(row => {
-                                    if (row['과목분류'] && row['내용']) {
-                                        dates[row['과목분류']] = new Date(row['내용']);
-                                    }
+                        const fetchPromises = Object.entries(csvUrls).map(async ([tabId, url]) => {
+                            const response = await fetch(url + '&t=' + new Date().getTime());
+                            const csvText = await response.text();
+                            return new Promise((resolve) => {
+                                Papa.parse(csvText, {
+                                    header: true,
+                                    skipEmptyLines: true,
+                                    complete: (results) => resolve(results.data)
                                 });
-                                examDates.value = dates;
-
-                                // 2. 아이템 로드 (설정 행 제외)
-                                items.value = results.data
-                                    .filter(row => (row['대주제'] || row['제목'] || row['내용']) && 
-                                                   !(row['대주제'] === 'EXAM_DATE' || row['제목'] === 'EXAM_DATE'))
-                                    .map((row, index) => ({
-                                        ...row,
-                                        id: (row['대주제'] || row['제목'] || 'no-title') + '_' + (row['과목분류'] || 'no-cat') + '_' + index
-                                    }));
-                                loading.value = false;
-                            }
+                            });
                         });
+
+                        const allData = await Promise.all(fetchPromises);
+                        let combinedItems = [];
+
+                        allData.forEach((data) => {
+                            // 1. 시험 날짜 설정
+                            const configRow = data.find(row => row['대주제'] === 'EXAM_DATE' || row['제목'] === 'EXAM_DATE');
+                            if (configRow && configRow['내용']) {
+                                const cat = configRow['과목분류'] || configRow['분류'] || '한국사';
+                                examDates.value[cat.replace(/\s+/g, '')] = new Date(configRow['내용']);
+                            }
+
+                            // 2. 아이템 가공
+                            const filteredData = data.filter(row => 
+                                (row['대주제'] || row['제목'] || row['내용']) && 
+                                !(row['대주제'] === 'EXAM_DATE' || row['제목'] === 'EXAM_DATE')
+                            ).map((row, index) => {
+                                // 탭 이름과 매칭을 위한 카테고리 정규화 (공백 제거)
+                                const rawCat = row['과목분류'] || row['분류'] || '';
+                                const normalizedCat = rawCat.replace(/\s+/g, '');
+                                
+                                return {
+                                    ...row,
+                                    normalizedCategory: normalizedCat,
+                                    id: (row['대주제'] || row['제목'] || 'no-title') + '_' + normalizedCat + '_' + index
+                                };
+                            });
+                            combinedItems = [...combinedItems, ...filteredData];
+                        });
+
+                        items.value = combinedItems;
+                        loading.value = false;
                     } catch (err) {
                         console.error('Data sync failed:', err);
                         loading.value = false;
@@ -483,12 +506,13 @@
                     
                     const currentTabObj = tabs.value.find(t => t.id === currentTab.value);
                     if (!currentTabObj || !currentTabObj.category) return [];
+                    const targetNormalized = currentTabObj.category.replace(/\s+/g, '');
 
                     const filtered = items.value.filter(item => {
                         if (!item) return false;
                         
-                        // 1. 과목 매칭 (과목분류 컬럼 기준)
-                        if (item['과목분류'] !== currentTabObj.category) return false;
+                        // 1. 과목 매칭 (정규화된 이름으로 매칭)
+                        if (item.normalizedCategory !== targetNormalized) return false;
 
                         // 2. 검색어 필터링
                         const s = searchQuery.value.toLowerCase();
@@ -544,7 +568,26 @@
                 // 법학 탭용 내용 렌더링 (줄바꿈 및 불렛 포인트 처리)
                 const renderLawContent = (content) => {
                     if (!content) return [];
-                    return content.split('\n').map(line => line.trim()).filter(Boolean);
+                    return content.split('\n').map(line => {
+                        const leadingSpaces = line.match(/^ */)[0].length;
+                        const level = Math.floor(leadingSpaces / 4);
+                        let text = line.trim().replace(/^- /, '');
+                        return { text, level };
+                    });
+                };
+
+                const highlightText = (text) => {
+                    if (!text) return '';
+                    let highlighted = text;
+                    
+                    // 1. [원칙], [예외], [판례] 강조 (파란색 박스 느낌)
+                    highlighted = highlighted.replace(/(\[원칙\]|\[예외\]|\[판례\])/g, '<span class="text-blue-400 font-bold">$1</span>');
+                    
+                    // 2. 유죄, 무죄, 합헌, 위헌 강조 (네온 컬러)
+                    highlighted = highlighted.replace(/(유죄|위헌|성립)/g, '<span class="text-red-400 font-bold">$1</span>');
+                    highlighted = highlighted.replace(/(무죄|합헌|면죄)/g, '<span class="text-green-400 font-bold">$1</span>');
+                    
+                    return highlighted;
                 };
 
                 const resetFilters = () => { searchQuery.value = ''; selectedEra.value = '전체'; selectedCategory.value = '전체'; };
@@ -565,7 +608,7 @@
                 return {
                     items, loading, searchQuery, selectedEra, selectedCategory,
                     uniqueEras, uniqueCategories, sortedFilteredList, resetFilters,
-                    showScrollTop, scrollToTop, splitContent, renderLawContent, currentTab, tabs,
+                    showScrollTop, scrollToTop, splitContent, renderLawContent, highlightText, currentTab, tabs,
                     fontSize, viewCounts, incrementViewCount, getViewCount, clearStats, isDataTab,
                     displayCount, fontOptions, currentFont,
                     showScoreInput, newScore, scoreHistory, dDay, avgScore, saveScore
