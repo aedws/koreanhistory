@@ -394,8 +394,18 @@
                             header: true,
                             skipEmptyLines: true,
                             complete: (results) => {
+                                // 1. 시험 날짜 설정 (제목이 EXAM_DATE인 행 찾기)
+                                const configRow = results.data.find(row => row['대주제'] === 'EXAM_DATE' || row['제목'] === 'EXAM_DATE');
+                                if (configRow && configRow['내용']) {
+                                    examDate.value = new Date(configRow['내용']);
+                                } else {
+                                    examDate.value = new Date('2026-02-07'); // 기본값
+                                }
+
+                                // 2. 아이템 로드 (설정 행 제외)
                                 items.value = results.data
-                                    .filter(row => row['대주제'] || row['제목'] || row['내용'])
+                                    .filter(row => (row['대주제'] || row['제목'] || row['내용']) && 
+                                                   !(row['대주제'] === 'EXAM_DATE' || row['제목'] === 'EXAM_DATE'))
                                     .map((row, index) => ({
                                         ...row,
                                         id: (row['대주제'] || row['제목'] || 'no-title') + '_' + (row['과목분류'] || 'no-cat') + '_' + index
@@ -410,7 +420,7 @@
                 };
 
                 const dDay = computed(() => {
-                    if (!examDate.value) return 0;
+                    if (!examDate.value || isNaN(examDate.value.getTime())) return 0;
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
                     const diff = examDate.value - today;
