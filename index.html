@@ -93,8 +93,8 @@
         .text-title-custom { font-size: var(--title-font-size, 18px); }
     </style>
 </head>
-<body class="selection:bg-blue-500/30" :style="{'--base-font-size': fontSize + 'px', '--title-font-size': (fontSize + 4) + 'px'}">
-    <div id="app" class="max-w-4xl mx-auto min-h-screen flex flex-col pb-20">
+<body class="selection:bg-blue-500/30">
+    <div id="app" class="max-w-4xl mx-auto min-h-screen flex flex-col pb-20" :style="{'--base-font-size': fontSize + 'px', '--title-font-size': (Number(fontSize) + 4) + 'px'}">
         <div class="scanline"></div>
 
         <!-- 상단 헤더 섹션 -->
@@ -106,10 +106,7 @@
                     <span class="text-white">1.0</span>
                 </h1>
                 <p class="text-xs md:text-sm font-orbitron text-gray-500 mt-2 tracking-widest uppercase">
-                    ARCHITECTURAL DATA MANAGEMENT SYSTEM
-                </p>
-                <p class="text-[10px] md:text-xs text-blue-400/60 mt-4 italic font-light">
-                    "Though the world be false, I will remain true to myself."
+                    Though the world be false, I will remain true to myself
                 </p>
             </div>
 
@@ -271,7 +268,7 @@
     </div>
 
     <script>
-        const { createApp, ref, computed, onMounted, onUnmounted } = Vue;
+        const { createApp, ref, computed, onMounted, onUnmounted, watch } = Vue;
 
         createApp({
             setup() {
@@ -367,7 +364,7 @@
                 const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
                 const handleScroll = () => showScrollTop.value = window.scrollY > 300;
 
-                Vue.watch(fontSize, (newVal) => {
+                watch(fontSize, (newVal) => {
                     localStorage.setItem('sigma-font-size', newVal);
                 });
 
