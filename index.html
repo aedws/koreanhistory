@@ -221,22 +221,29 @@
                     <div class="flex justify-between items-start mb-4">
                         <div class="flex flex-col gap-1">
                             <span class="text-[10px] uppercase tracking-tighter text-gray-500 font-medium">
-                                {{ item.시대 }} | {{ item.세부 }}
+                                {{ item.분류 }}
                             </span>
-                            <h2 class="font-bold group-hover:text-blue-400 transition-colors text-title-custom">{{ item.제목 }}</h2>
+                            <h2 class="font-bold group-hover:text-blue-400 transition-colors text-title-custom">{{ item.대주제 }}</h2>
                         </div>
                         <div class="flex flex-col items-end gap-1">
-                            <span class="text-[10px] font-orbitron text-blue-500 uppercase tracking-widest">{{ item.분류 }}</span>
                             <span v-if="getViewCount(item.id) > 0" class="text-[9px] font-orbitron text-green-500/60">ACCESS: {{ getViewCount(item.id) }}</span>
                         </div>
                     </div>
 
-                    <!-- 태그 영역 -->
-                    <div class="flex flex-wrap gap-2 mt-4">
+                    <!-- 태그/내용 영역 (한국사 vs 법학 구분 가능) -->
+                    <div v-if="currentTab === 'korean_history'" class="flex flex-wrap gap-2 mt-4">
                         <span v-for="(tag, tIdx) in splitContent(item.내용)" :key="tIdx"
                             class="px-3 py-1 bg-blue-500/5 border border-blue-500/20 rounded font-medium text-base-custom text-blue-400">
                             #{{ tag.trim() }}
                         </span>
+                    </div>
+                    <!-- 법학 탭용 리스트 뷰 -->
+                    <div v-else class="space-y-2 mt-4 text-base-custom text-gray-300 leading-relaxed">
+                        <div v-for="(line, lIdx) in renderLawContent(item.내용)" :key="lIdx" 
+                            :class="['flex gap-2', line.startsWith('-') ? 'pl-4 text-gray-400' : '']">
+                            <span v-if="!line.startsWith('-')" class="text-blue-500 mt-1">▶</span>
+                            <span>{{ line.startsWith('-') ? line.substring(1).trim() : line }}</span>
+                        </div>
                     </div>
                 </div>
 
@@ -358,14 +365,14 @@
                 const viewCounts = ref(initialCounts);
 
                 const tabs = ref([
-                    { id: 'korean_history', name: '한국사' },
-                    { id: 'criminal_law_general', name: '형법 총론' },
-                    { id: 'criminal_law_special', name: '형법 각론' },
-                    { id: 'criminal_procedure', name: '형사소송법' },
-                    { id: 'constitutional_law', name: '헌법' },
-                    { id: 'info_security', name: '정보보호론' },
-                    { id: 'network_security', name: '네트워크보안' },
-                    { id: 'software_engineering', name: '소프트웨어공학' },
+                    { id: 'korean_history', name: '한국사', category: '한국사' },
+                    { id: 'criminal_law_general', name: '형법 총론', category: '형법 총론' },
+                    { id: 'criminal_law_special', name: '형법 각론', category: '형법 각론' },
+                    { id: 'criminal_procedure', name: '형사소송법', category: '형사소송법' },
+                    { id: 'constitutional_law', name: '헌법', category: '헌법' },
+                    { id: 'info_security', name: '정보보호론', category: '정보보호론' },
+                    { id: 'network_security', name: '네트워크보안', category: '네트워크보안' },
+                    { id: 'software_engineering', name: '소프트웨어공학', category: '소프트웨어공학' },
                     { id: 'settings', name: '설정' }
                 ]);
 
@@ -380,21 +387,11 @@
                             header: true,
                             skipEmptyLines: true,
                             complete: (results) => {
-                                // 시험 일정 데이터 처리 (만약 시트에 '시험일자' 컬럼이 있는 데이터가 있다면)
-                                const dateRow = results.data.find(row => row['제목'] === 'NEXT_EXAM_DATE');
-                                if (dateRow && dateRow['내용']) {
-                                    examDate.value = new Date(dateRow['내용']);
-                                } else {
-                                    // 기본값 (예: 다음 한능검 시험일 2026-02-07로 임시 설정)
-                                    examDate.value = new Date('2026-02-07');
-                                }
-
-                                // id가 없는 데이터에 고유 id 부여
                                 items.value = results.data
-                                    .filter(row => row['제목'] && row['제목'] !== 'NEXT_EXAM_DATE')
+                                    .filter(row => row['대주제'] || row['내용'])
                                     .map((row, index) => ({
                                         ...row,
-                                        id: row['제목'] + '_' + row['시대'] + '_' + index
+                                        id: (row['대주제'] || 'no-title') + '_' + (row['분류'] || 'no-cat') + '_' + index
                                     }));
                                 loading.value = false;
                             }
@@ -430,16 +427,29 @@
                     showScoreInput.value = false;
                 };
 
-                const uniqueEras = computed(() => [...new Set(items.value.map(i => i['시대']))].filter(Boolean));
-                const uniqueCategories = computed(() => [...new Set(items.value.map(i => i['분류']))].filter(Boolean));
+                const uniqueEras = computed(() => {
+                    const filteredItems = items.value.filter(item => {
+                        const currentTabObj = tabs.value.find(t => t.id === currentTab.value);
+                        return item['분류'] === currentTabObj?.category;
+                    });
+                    // 대주제를 필터로 사용 (바뀐 구조 대응)
+                    return [...new Set(filteredItems.map(i => i['대주제']))].filter(Boolean);
+                });
+                
+                const uniqueCategories = computed(() => {
+                    // 현재 구조에서는 분류가 탭 구분이므로, 세부 카테고리가 필요하다면 추가 로직 필요
+                    // 일단은 비워두거나 제목의 앞부분을 활용 가능
+                    return [];
+                });
 
-                const isDataTab = computed(() => currentTab.value === 'korean_history');
+                const isDataTab = computed(() => {
+                    const currentTabObj = tabs.value.find(t => t.id === currentTab.value);
+                    return currentTabObj && currentTabObj.category;
+                });
 
                 const displayCount = computed(() => {
-                    // 로딩 중이거나 한국사 탭이 아닐 때만 0으로 표시
                     if (loading.value) return 0;
-                    if (currentTab.value !== 'korean_history') return 0;
-                    
+                    if (!isDataTab.value) return 0;
                     const list = sortedFilteredList.value;
                     return list ? list.length : 0;
                 });
@@ -447,20 +457,24 @@
                 const sortedFilteredList = computed(() => {
                     if (!items.value || items.value.length === 0) return [];
                     
+                    const currentTabObj = tabs.value.find(t => t.id === currentTab.value);
+                    if (!currentTabObj || !currentTabObj.category) return [];
+
                     const filtered = items.value.filter(item => {
                         if (!item) return false;
-                        const s = searchQuery.value.toLowerCase();
-                        const era = String(item['시대'] || '');
-                        const sub = String(item['세부'] || '');
-                        const cat = String(item['분류'] || '');
-                        const title = String(item['제목'] || '');
-                        const content = String(item['내용'] || '');
                         
-                        const searchableText = `${era} ${sub} ${cat} ${title} ${content}`.toLowerCase();
+                        // 1. 탭 카테고리 매칭 (한국사, 형법 총론 등)
+                        if (item['분류'] !== currentTabObj.category) return false;
+
+                        // 2. 검색어 필터링
+                        const s = searchQuery.value.toLowerCase();
+                        const searchableText = `${item['분류']} ${item['대주제']} ${item['내용']}`.toLowerCase();
                         const matchSearch = searchableText.includes(s);
-                        const matchEra = selectedEra.value === '전체' || item['시대'] === selectedEra.value;
-                        const matchCat = selectedCategory.value === '전체' || item['분류'] === selectedCategory.value;
-                        return matchSearch && matchEra && matchCat;
+                        
+                        // 3. 필터(대주제) 매칭
+                        const matchEra = selectedEra.value === '전체' || item['대주제'] === selectedEra.value;
+                        
+                        return matchSearch && matchEra;
                     });
 
                     // 터치 횟수(조회수) 순으로 내림차순 정렬
@@ -487,6 +501,13 @@
                 };
 
                 const splitContent = (content) => content ? content.split('/') : [];
+                
+                // 법학 탭용 내용 렌더링 (줄바꿈 및 불렛 포인트 처리)
+                const renderLawContent = (content) => {
+                    if (!content) return [];
+                    return content.split('\n').map(line => line.trim()).filter(Boolean);
+                };
+
                 const resetFilters = () => { searchQuery.value = ''; selectedEra.value = '전체'; selectedCategory.value = '전체'; };
                 const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
                 const handleScroll = () => showScrollTop.value = window.scrollY > 300;
@@ -505,7 +526,7 @@
                 return {
                     items, loading, searchQuery, selectedEra, selectedCategory,
                     uniqueEras, uniqueCategories, sortedFilteredList, resetFilters,
-                    showScrollTop, scrollToTop, splitContent, currentTab, tabs,
+                    showScrollTop, scrollToTop, splitContent, renderLawContent, currentTab, tabs,
                     fontSize, viewCounts, incrementViewCount, getViewCount, clearStats, isDataTab,
                     displayCount, fontOptions, currentFont,
                     showScoreInput, newScore, scoreHistory, dDay, avgScore, saveScore
