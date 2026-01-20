@@ -497,7 +497,56 @@
                 const scoreHistory = ref(JSON.parse(localStorage.getItem('sigma-scores') || '[]'));
                 const examDates = ref({}); // 과목별 시험 날짜 저장용 객체
 
-                // 로컬 스토리지 데이터 안전하게 가져오기
+                const syncApiUrl = 'https://script.google.com/macros/s/AKfycbzaaGoc81uxapvqSMcHuHVcNtw4JPqc9YZ7y3uyFBETjjPNEuH7R8HPGAp_QrSP5uVTzw/exec';
+                const isSyncing = ref(false);
+
+                // 클라우드 데이터 동기화 함수
+                const syncWithCloud = async () => {
+                    isSyncing.value = true;
+                    try {
+                        // 1. 클라우드에서 데이터 가져오기 (GET)
+                        const response = await fetch(syncApiUrl);
+                        const cloudData = await response.json();
+                        
+                        // 2. 로컬 데이터와 병합
+                        cloudData.forEach(row => {
+                            if (row.id) {
+                                // 조회수 병합 (더 큰 값 우선)
+                                if (row.viewCount) {
+                                    viewCounts.value[row.id] = Math.max(viewCounts.value[row.id] || 0, parseInt(row.viewCount));
+                                }
+                                // 메모 병합 (클라우드 우선)
+                                if (row.memo) {
+                                    nodeMemos.value[row.id] = row.memo;
+                                }
+                            }
+                        });
+                        
+                        // 로컬 저장소 업데이트
+                        localStorage.setItem('sigma-view-counts', JSON.stringify(viewCounts.value));
+                        localStorage.setItem('sigma-node-memos', JSON.stringify(nodeMemos.value));
+                        
+                        console.log('Cloud Sync Complete');
+                    } catch (err) {
+                        console.error('Cloud Sync Failed:', err);
+                    } finally {
+                        isSyncing.value = false;
+                    }
+                };
+
+                // 클라우드에 데이터 저장 함수 (POST)
+                const saveToCloud = async (id, data) => {
+                    try {
+                        await fetch(syncApiUrl, {
+                            method: 'POST',
+                            mode: 'no-cors', // Apps Script CORS 대응
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id, ...data })
+                        });
+                    } catch (err) {
+                        console.error('Save to Cloud Failed:', err);
+                    }
+                };
                 const savedFontSize = localStorage.getItem('sigma-font-size');
                 const fontSize = ref(savedFontSize ? parseInt(savedFontSize) : 14);
                 
@@ -733,6 +782,9 @@
                     const currentCount = viewCounts.value[item.id] || 0;
                     viewCounts.value[item.id] = currentCount + 1;
                     localStorage.setItem('sigma-view-counts', JSON.stringify(viewCounts.value));
+                    
+                    // 클라우드 동기화
+                    saveToCloud(item.id, { viewCount: viewCounts.value[item.id] });
                 };
 
                 const getViewCount = (id) => viewCounts.value[id] || 0;
@@ -783,7 +835,11 @@
                     localStorage.setItem('sigma-font-family', newVal);
                 });
 
-                onMounted(() => { fetchData(); window.addEventListener('scroll', handleScroll); });
+                onMounted(() => { 
+                    fetchData(); 
+                    syncWithCloud(); // 클라우드 동기화 시작
+                    window.addEventListener('scroll', handleScroll); 
+                });
                 onUnmounted(() => window.removeEventListener('scroll', handleScroll));
 
                 return {
