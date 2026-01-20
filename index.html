@@ -317,12 +317,13 @@
                         </div>
                     </div>
 
-                    <!-- 서브키워드 영역 (하단 #태그) -->
-                    <div class="flex flex-wrap gap-2 mt-auto">
-                        <span v-for="(tag, tIdx) in splitContent(item.서브키워드)" :key="tIdx"
-                            class="px-2 py-0.5 bg-blue-500/5 border border-blue-500/10 rounded text-[11px] text-blue-400/60 font-medium">
-                            #{{ tag.trim() }}
-                        </span>
+                    <!-- 서브키워드 영역 (메인 페이지에서는 암호화 박스로 숨김) -->
+                    <div class="mt-auto">
+                        <div class="w-full h-12 bg-black/80 rounded-xl border border-white/5 flex items-center justify-center group-hover:border-blue-500/20 transition-colors">
+                            <div class="flex gap-1">
+                                <div v-for="i in 3" :key="i" class="w-1 h-1 bg-gray-800 rounded-full animate-pulse" :style="{animationDelay: (i*200)+'ms'}"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -428,7 +429,14 @@
                             <div v-if="currentTab === 'korean_history'" class="space-y-4 bg-white/5 p-6 rounded-2xl border border-white/5">
                                 <div v-for="(line, lIdx) in splitContent(selectedItem.내용)" :key="lIdx" class="flex gap-3">
                                     <span class="text-blue-500 mt-1.5 text-lg">•</span>
-                                    <p :class="['text-base md:text-lg leading-relaxed break-keep', lIdx === 0 ? 'text-gray-100 font-bold' : 'text-gray-400']">{{ line.trim() }}</p>
+                                    <p :class="['text-base md:text-lg leading-relaxed break-keep flex-1', lIdx === 0 ? 'text-gray-100 font-bold' : 'text-gray-400']">{{ line.trim() }}</p>
+                                </div>
+                                <!-- 팝업 내 서브키워드 표시 추가 -->
+                                <div class="flex flex-wrap gap-2 mt-6 pt-4 border-t border-white/5">
+                                    <span v-for="(tag, tIdx) in splitContent(selectedItem.서브키워드)" :key="tIdx"
+                                        class="px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 rounded text-xs text-blue-400 font-medium">
+                                        #{{ tag.trim() }}
+                                    </span>
                                 </div>
                             </div>
                             <div v-else class="space-y-3 bg-white/5 p-6 rounded-2xl border border-white/5">
