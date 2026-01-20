@@ -315,11 +315,12 @@
                             <!-- 번호 매기기(1.)가 아니면 불렛 포인트 표시 -->
                             <span v-if="!isNumberedLine(line)" class="text-blue-500 shrink-0 text-lg leading-[1.2]">•</span>
                             <span :class="[
-                                'text-base-custom break-keep flex-1',
+                                'text-base-custom break-keep flex-1 transition-all',
                                 (lIdx === 0 || isNumberedLine(line)) ? 'text-gray-100 font-bold' : 'text-gray-500 text-[0.95em]',
-                                isNumberedLine(line) ? 'ml-1' : ''
+                                isNumberedLine(line) ? 'ml-1' : '',
+                                isImportantLine(line) ? 'text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.6)] font-bold' : ''
                             ]">
-                                {{ line.trim() }}
+                                {{ cleanText(line) }}
                             </span>
                         </div>
                     </div>
@@ -330,7 +331,8 @@
                             :style="{ paddingLeft: (line.level * 1.5) + 'rem' }">
                             <span v-if="line.level === 0" class="text-blue-500 mt-1 shrink-0">▶</span>
                             <span v-else class="text-gray-600 mt-1 shrink-0">•</span>
-                            <span class="break-keep" v-html="highlightText(line.text)"></span>
+                            <span :class="['break-keep', line.important ? 'text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.6)] font-bold' : '']" 
+                                  v-html="highlightText(line.text)"></span>
                         </div>
                     </div>
                 </div>
@@ -437,9 +439,10 @@
                             <div v-if="currentTab === 'korean_history'" class="space-y-4 bg-white/5 p-6 rounded-2xl border border-white/5">
                                 <div v-for="(line, lIdx) in splitContent(selectedItem.내용)" :key="lIdx" class="flex gap-3">
                                     <span v-if="!isNumberedLine(line)" class="text-blue-500 mt-1.5 text-lg">•</span>
-                                    <p :class="['text-base md:text-lg leading-relaxed break-keep flex-1', 
+                                    <p :class="['text-base md:text-lg leading-relaxed break-keep flex-1 transition-all', 
                                                (lIdx === 0 || isNumberedLine(line)) ? 'text-gray-100 font-bold' : 'text-gray-400',
-                                               isNumberedLine(line) ? 'ml-1' : '']">{{ line.trim() }}</p>
+                                               isNumberedLine(line) ? 'ml-1' : '',
+                                               isImportantLine(line) ? 'text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.6)] font-bold' : '']">{{ cleanText(line) }}</p>
                                 </div>
                                 <!-- 팝업 내 서브키워드 표시 추가 -->
                                 <div class="flex flex-wrap gap-2 mt-6 pt-4 border-t border-white/5">
@@ -453,7 +456,9 @@
                                 <div v-for="(line, lIdx) in renderLawContent(selectedItem.내용)" :key="lIdx" 
                                     :class="['flex gap-3 transition-all', line.level > 0 ? 'border-l border-white/10 ml-4 pl-4' : '']">
                                     <span v-if="line.level === 0" class="text-blue-500 mt-1">▶</span>
-                                    <p class="text-base md:text-lg leading-relaxed text-gray-200" v-html="highlightText(line.text)"></p>
+                                    <p :class="['text-base md:text-lg leading-relaxed break-keep flex-1', 
+                                               line.important ? 'text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.6)] font-bold' : 'text-gray-200']" 
+                                       v-html="highlightText(line.text)"></p>
                                 </div>
                             </div>
                         </div>
@@ -815,6 +820,14 @@
                     if (!text) return false;
                     return /^\d+\./.test(text.trim());
                 };
+
+                // 중요 문장(.*) 여부 확인 및 텍스트 정제
+                const isImportantLine = (text) => text && text.trim().endsWith('.*');
+                const cleanText = (text) => {
+                    if (!text) return '';
+                    let t = text.trim();
+                    return t.endsWith('.*') ? t.slice(0, -1) : t;
+                };
                 
                 // 법학 탭용 내용 렌더링 (줄바꿈 및 불렛 포인트 처리)
                 const renderLawContent = (content) => {
@@ -823,7 +836,9 @@
                         const leadingSpaces = line.match(/^ */)[0].length;
                         const level = Math.floor(leadingSpaces / 4);
                         let text = line.trim().replace(/^- /, '');
-                        return { text, level };
+                        const important = text.endsWith('.*');
+                        if (important) text = text.slice(0, -1);
+                        return { text, level, important };
                     });
                 };
 
