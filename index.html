@@ -318,7 +318,7 @@
                                 'text-base-custom break-keep flex-1 transition-all',
                                 (lIdx === 0 || isNumberedLine(line)) ? 'text-gray-100 font-bold' : 'text-gray-500 text-[0.95em]',
                                 isNumberedLine(line) ? 'ml-1' : '',
-                                isImportantLine(line) ? 'text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.6)] font-bold' : ''
+                                isImportantLine(line) ? 'text-sky-200 drop-shadow-[0_0_10px_rgba(56,189,248,0.8)] font-black brightness-110' : ''
                             ]">
                                 {{ cleanText(line) }}
                             </span>
@@ -331,7 +331,7 @@
                             :style="{ paddingLeft: (line.level * 1.5) + 'rem' }">
                             <span v-if="line.level === 0" class="text-blue-500 mt-1 shrink-0">▶</span>
                             <span v-else class="text-gray-600 mt-1 shrink-0">•</span>
-                            <span :class="['break-keep', line.important ? 'text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.6)] font-bold' : '']" 
+                            <span :class="['break-keep transition-all', line.important ? 'text-sky-200 drop-shadow-[0_0_10px_rgba(56,189,248,0.8)] font-black brightness-110' : '']" 
                                   v-html="highlightText(line.text)"></span>
                         </div>
                     </div>
@@ -442,7 +442,7 @@
                                     <p :class="['text-base md:text-lg leading-relaxed break-keep flex-1 transition-all', 
                                                (lIdx === 0 || isNumberedLine(line)) ? 'text-gray-100 font-bold' : 'text-gray-400',
                                                isNumberedLine(line) ? 'ml-1' : '',
-                                               isImportantLine(line) ? 'text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.6)] font-bold' : '']">{{ cleanText(line) }}</p>
+                                               isImportantLine(line) ? 'text-sky-200 drop-shadow-[0_0_10px_rgba(56,189,248,0.8)] font-black brightness-110' : '']">{{ cleanText(line) }}</p>
                                 </div>
                                 <!-- 팝업 내 서브키워드 표시 추가 -->
                                 <div class="flex flex-wrap gap-2 mt-6 pt-4 border-t border-white/5">
@@ -456,8 +456,8 @@
                                 <div v-for="(line, lIdx) in renderLawContent(selectedItem.내용)" :key="lIdx" 
                                     :class="['flex gap-3 transition-all', line.level > 0 ? 'border-l border-white/10 ml-4 pl-4' : '']">
                                     <span v-if="line.level === 0" class="text-blue-500 mt-1">▶</span>
-                                    <p :class="['text-base md:text-lg leading-relaxed break-keep flex-1', 
-                                               line.important ? 'text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.6)] font-bold' : 'text-gray-200']" 
+                                    <p :class="['text-base md:text-lg leading-relaxed break-keep flex-1 transition-all', 
+                                               line.important ? 'text-sky-200 drop-shadow-[0_0_10px_rgba(56,189,248,0.8)] font-black brightness-110' : 'text-gray-200']" 
                                        v-html="highlightText(line.text)"></p>
                                 </div>
                             </div>
