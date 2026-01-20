@@ -287,12 +287,12 @@
                     </div>
 
                     <!-- 한국사 전용 내용 렌더링 (첫 문장 강조) -->
-                    <div class="space-y-2 mt-4 mb-6">
+                    <div class="space-y-3 mt-4 mb-6">
                         <div v-for="(line, lIdx) in splitContent(item.내용)" :key="lIdx" 
-                            class="flex gap-2 leading-relaxed">
-                            <span class="text-blue-500 shrink-0 mt-1.5">•</span>
+                            class="flex items-start gap-2 leading-relaxed">
+                            <span class="text-blue-500 shrink-0 text-lg leading-[1.2]">•</span>
                             <span :class="[
-                                'text-base-custom break-keep',
+                                'text-base-custom break-keep flex-1',
                                 lIdx === 0 ? 'text-gray-100 font-bold' : 'text-gray-500 text-[0.95em]'
                             ]">
                                 {{ line.trim() }}
