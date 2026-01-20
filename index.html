@@ -316,7 +316,7 @@
                             <span v-if="!isNumberedLine(line)" class="text-blue-500 shrink-0 text-lg leading-[1.2]">•</span>
                             <span :class="[
                                 'text-base-custom break-keep flex-1',
-                                lIdx === 0 ? 'text-gray-100 font-bold' : 'text-gray-500 text-[0.95em]',
+                                (lIdx === 0 || isNumberedLine(line)) ? 'text-gray-100 font-bold' : 'text-gray-500 text-[0.95em]',
                                 isNumberedLine(line) ? 'ml-1' : ''
                             ]">
                                 {{ line.trim() }}
@@ -438,7 +438,7 @@
                                 <div v-for="(line, lIdx) in splitContent(selectedItem.내용)" :key="lIdx" class="flex gap-3">
                                     <span v-if="!isNumberedLine(line)" class="text-blue-500 mt-1.5 text-lg">•</span>
                                     <p :class="['text-base md:text-lg leading-relaxed break-keep flex-1', 
-                                               lIdx === 0 ? 'text-gray-100 font-bold' : 'text-gray-400',
+                                               (lIdx === 0 || isNumberedLine(line)) ? 'text-gray-100 font-bold' : 'text-gray-400',
                                                isNumberedLine(line) ? 'ml-1' : '']">{{ line.trim() }}</p>
                                 </div>
                                 <!-- 팝업 내 서브키워드 표시 추가 -->
