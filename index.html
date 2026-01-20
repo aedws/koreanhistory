@@ -773,9 +773,17 @@
                     selectedItem.value = null;
                 };
 
+                let memoTimeout = null;
                 const updateMemo = (id, event) => {
-                    nodeMemos.value[id] = event.target.value;
+                    const newMemo = event.target.value;
+                    nodeMemos.value[id] = newMemo;
                     localStorage.setItem('sigma-node-memos', JSON.stringify(nodeMemos.value));
+                    
+                    // 클라우드 동기화 (디바운싱 적용: 타이핑 멈추고 0.5초 뒤 저장)
+                    if (memoTimeout) clearTimeout(memoTimeout);
+                    memoTimeout = setTimeout(() => {
+                        saveToCloud(id, { memo: newMemo });
+                    }, 500);
                 };
 
                 const incrementViewCount = (item) => {
